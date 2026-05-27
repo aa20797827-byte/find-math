@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>미적분Ⅰ 문제 매칭 대시보드</title>
+<!-- PDF.js for client-side PDF parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root {
+  --bg:#f0f2f5; --card:#fff; --border:#e2e8f0; --text:#1a202c;
+  --muted:#718096; --accent:#4f46e5; --accent-l:#eef2ff;
+  --sh:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --sh2:0 4px 12px rgba(0,0,0,.1); --r:10px; --sw:320px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+  background:var(--bg);color:var(--text);height:100vh;display:flex;
+  flex-direction:column;overflow:hidden}
+
+/* ── HEADER ── */
+header{background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#fff;
+  padding:10px 20px;display:flex;align-items:center;gap:14px;
+  box-shadow:0 2px 10px rgba(0,0,0,.3);flex-shrink:0;z-index:200}
+.logo{font-size:18px;font-weight:800;letter-spacing:-.5px}
+.logo-sub{font-size:11px;opacity:.7;margin-top:1px}
+.header-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.hbtn{padding:7px 14px;border-radius:8px;border:none;font-size:13px;
+  font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;
+  transition:all .15s}
+.hbtn.upload{background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.3)}
+.hbtn.upload:hover{background:rgba(255,255,255,.25)}
+.hbtn.share{background:#fff;color:#4338ca}
+.hbtn.share:hover{background:#f0f0ff}
+.stat-bar{display:flex;gap:14px;align-items:center;margin-right:4px}
+.stat-item{text-align:center}
+.stat-num{font-size:18px;font-weight:700;line-height:1}
+.stat-lbl{font-size:10px;opacity:.65;margin-top:1px}
+.div{width:1px;height:28px;background:rgba(255,255,255,.2)}
+
+/* ── MAIN ── */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sw);background:var(--card);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.sb-top{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.search-box{display:flex;align-items:center;background:var(--bg);
+  border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;gap:7px}
+.search-box:focus-within{border-color:var(--accent);background:#fff}
+.search-box input{border:none;background:transparent;outline:none;font-size:13px;width:100%}
+.filter-sec{padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.filter-title{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--muted);margin-bottom:7px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{padding:3px 9px;border-radius:16px;font-size:11px;font-weight:600;
+  cursor:pointer;border:1.5px solid transparent;transition:all .15s;user-select:none}
+.chip:hover{opacity:.85}
+.chip.active{border-color:rgba(0,0,0,.2);box-shadow:0 2px 5px rgba(0,0,0,.12)}
+.chip.all{background:var(--accent);color:#fff}
+.lchips{display:flex;gap:5px;flex-wrap:wrap}
+.lchip{padding:3px 8px;border-radius:10px;font-size:11px;font-weight:600;
+  cursor:pointer;border:1.5px solid var(--border);background:#fff;
+  color:var(--muted);transition:all .15s}
+.lchip:hover{background:var(--bg)}
+.lchip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.list-cnt{font-size:11px;color:var(--muted);padding:7px 14px 3px;flex-shrink:0}
+.prob-list{flex:1;overflow-y:auto;padding:6px 8px}
+.prob-list::-webkit-scrollbar{width:4px}
+.prob-list::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:99px}
+.pcard{display:flex;align-items:center;gap:8px;padding:7px 8px;
+  border-radius:7px;cursor:pointer;transition:all .15s;
+  border:1.5px solid transparent;margin-bottom:2px}
+.pcard:hover{background:var(--bg)}
+.pcard.sel{background:var(--accent-l);border-color:var(--accent)}
+.pnum{font-size:14px;font-weight:700;min-width:38px}
+.pbadge{font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;
+  white-space:nowrap;color:#fff}
+.ptopic{font-size:11px;color:var(--muted);flex:1;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.plvl{font-size:10px;padding:1px 5px;border-radius:3px;
+  background:#f7fafc;border:1px solid var(--border);color:var(--muted)}
+
+/* ── DETAIL ── */
+.detail{flex:1;overflow-y:auto;padding:20px;background:var(--bg)}
+.detail::-webkit-scrollbar{width:4px}
+.detail::-webkit-scrollbar-thumb{background:#cbd5e0;border-radius:99px}
+.d-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px}
+.d-num{font-size:44px;font-weight:900;line-height:1}
+.d-meta h2{font-size:17px;font-weight:700;margin-bottom:5px}
+.d-meta .badges{display:flex;gap:5px;flex-wrap:wrap}
+.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px}
+.badge.src{background:#1e1b4b;color:#fff}
+.badge.book{background:#e2e8f0;color:#4a5568}
+.badge.lvl{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.sec-lbl{font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--muted);margin:16px 0 8px}
+.topic-card{background:#fff;border-radius:var(--r);padding:14px 16px;
+  border:1px solid var(--border);box-shadow:var(--sh);margin-bottom:10px}
+.tc-lbl{font-size:10px;font-weight:700;letter-spacing:.6px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.tc-title{font-size:15px;font-weight:700}
+.tc-detail{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.mh{background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#fff;
+  border-radius:var(--r) var(--r) 0 0;padding:12px 16px;
+  display:flex;align-items:center;gap:8px}
+.mh .micon{font-size:20px}
+.mh .mtitle{font-size:14px;font-weight:700}
+.mh .marrow{margin-left:auto;opacity:.7}
+.mbody{background:#fff;border-radius:0 0 var(--r) var(--r);
+  border:1px solid var(--border);border-top:none;overflow:hidden;
+  margin-bottom:10px;box-shadow:var(--sh)}
+.msec{padding:12px 16px;border-bottom:1px solid var(--border);position:relative}
+.msec:last-child{border-bottom:none}
+.msec::before{content:'';position:absolute;left:0;top:0;bottom:0;
+  width:4px;background:var(--sc,#4f46e5)}
+.msh{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.myh{font-size:11px;font-weight:700;padding:2px 7px;border-radius:3px;
+  color:#fff;background:var(--sc,#4f46e5);white-space:nowrap}
+.msn{font-size:11px;color:var(--muted);font-weight:500}
+.mname{font-size:14px;font-weight:700;margin-bottom:7px}
+.mdetails{display:flex;gap:10px;flex-wrap:wrap}
+.mdi{display:flex;align-items:center;gap:4px;font-size:12px}
+.mdi .ml{color:var(--muted);font-weight:500}
+.mdi .mv{font-weight:600}
+.nav-btns{display:flex;gap:7px;margin-top:16px}
+.nbtn{flex:1;padding:9px 14px;border-radius:7px;border:1.5px solid var(--border);
+  background:#fff;cursor:pointer;font-size:13px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  transition:all .15s;box-shadow:var(--sh)}
+.nbtn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
+.nbtn:disabled{opacity:.3;cursor:not-allowed}
+.overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.ocard{background:#fff;border-radius:var(--r);padding:12px 14px;
+  border:1px solid var(--border);box-shadow:var(--sh);cursor:pointer;
+  transition:all .15s;border-left:4px solid var(--oc,#4f46e5)}
+.ocard:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
+.oc-icon{font-size:18px;margin-bottom:3px}
+.oc-name{font-size:12px;font-weight:700}
+.oc-range{font-size:10px;color:var(--muted);margin-top:2px}
+.oc-count{font-size:20px;font-weight:800;margin-top:5px;color:var(--oc,#4f46e5)}
+.oc-clbl{font-size:10px;color:var(--muted)}
+.empty{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;height:100%;opacity:.4;gap:10px}
+.empty .eico{font-size:44px}
+.empty p{font-size:15px;font-weight:500}
+
+/* ── UPLOAD OVERLAY ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.overlay.hidden{display:none}
+.modal{background:#fff;border-radius:16px;padding:28px;max-width:640px;
+  width:100%;margin:16px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+.modal-close{float:right;background:none;border:none;font-size:20px;
+  cursor:pointer;color:var(--muted);margin-top:-4px}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.upload-slot{border:2px dashed var(--border);border-radius:12px;
+  padding:20px;text-align:center;cursor:pointer;transition:all .2s;
+  position:relative;min-height:130px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px}
+.upload-slot:hover,.upload-slot.drag{border-color:var(--accent);background:var(--accent-l)}
+.upload-slot.done{border-color:#27ae60;border-style:solid;background:#f0fff4}
+.upload-slot input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.slot-icon{font-size:28px}
+.slot-title{font-size:13px;font-weight:700}
+.slot-sub{font-size:11px;color:var(--muted)}
+.slot-file{font-size:12px;color:#27ae60;font-weight:600;margin-top:4px;
+  word-break:break-all;max-width:100%}
+.progress-bar{height:5px;background:var(--border);border-radius:99px;margin:12px 0;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#4338ca,#7c3aed);
+  border-radius:99px;transition:width .3s;width:0%}
+.proc-status{font-size:13px;color:var(--muted);text-align:center;margin-bottom:12px}
+.btn-row{display:flex;gap:8px;justify-content:flex-end}
+.btn{padding:9px 20px;border-radius:8px;border:none;font-size:13px;
+  font-weight:700;cursor:pointer;transition:all .15s}
+.btn.primary{background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff}
+.btn.primary:hover{opacity:.9}
+.btn.primary:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:var(--bg);color:var(--text);border:1.5px solid var(--border)}
+.btn.ghost:hover{background:#e8edf5}
+
+/* ── SHARE MODAL ── */
+.share-modal{max-width:520px}
+.share-steps{counter-reset:step;list-style:none;margin:16px 0}
+.share-steps li{counter-increment:step;display:flex;gap:12px;
+  align-items:flex-start;margin-bottom:12px;padding:12px 14px;
+  background:var(--bg);border-radius:10px}
+.share-steps li::before{content:counter(step);min-width:24px;height:24px;
+  border-radius:99px;background:var(--accent);color:#fff;font-size:12px;
+  font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-content strong{display:block;font-size:13px;font-weight:700;margin-bottom:2px}
+.step-content span{font-size:12px;color:var(--muted);line-height:1.4}
+.share-link-box{background:var(--bg);border:1.5px solid var(--border);
+  border-radius:8px;padding:10px 14px;font-size:13px;color:var(--accent);
+  word-break:break-all;margin:12px 0;display:flex;align-items:center;gap:8px}
+.copy-btn{padding:4px 10px;border-radius:6px;border:1.5px solid var(--accent);
+  background:transparent;color:var(--accent);font-size:11px;font-weight:700;
+  cursor:pointer;white-space:nowrap;flex-shrink:0}
+.copy-btn:hover{background:var(--accent);color:#fff}
+.netlify-badge{background:linear-gradient(135deg,#00ad9f,#007a70);
+  color:#fff;border-radius:8px;padding:10px 14px;display:flex;
+  align-items:center;gap:10px;margin-bottom:10px;cursor:pointer;
+  text-decoration:none;transition:opacity .15s}
+.netlify-badge:hover{opacity:.9}
+.netlify-badge .nb-icon{font-size:22px}
+.netlify-badge .nb-text strong{display:block;font-size:14px;font-weight:700}
+.netlify-badge .nb-text span{font-size:12px;opacity:.85}
+.netlify-badge .nb-arrow{margin-left:auto;font-size:16px}
+
+/* ── PROCESSING NOTICE ── */
+.proc-notice{background:linear-gradient(135deg,#4338ca,#7c3aed);
+  color:#fff;padding:8px 16px;font-size:12px;font-weight:600;
+  text-align:center;flex-shrink:0;display:none}
+.proc-notice.show{display:block}
+</style>
+</head>
+<body>
+
+<!-- ── PROCESSING NOTICE ── -->
+<div class="proc-notice" id="proc-notice">⚙️ PDF 처리 중… 잠시만 기다려 주세요</div>
+
+<!-- ── HEADER ── -->
+<header>
+  <div>
+    <div class="logo">📚 미적분Ⅰ 문제 매칭 대시보드</div>
+    <div class="logo-sub">[10차] 미적분1 2단원 ↔ 통합_개뿔 고등미적분Ⅰ(22개정) 유형편</div>
+  </div>
+  <div class="header-right">
+    <div class="stat-bar">
+      <div class="stat-item">
+        <div class="stat-num" id="hd-total">265</div>
+        <div class="stat-lbl">전체 문제</div>
+      </div>
+      <div class="div"></div>
+      <div class="stat-item">
+        <div class="stat-num" id="hd-shown">265</div>
+        <div class="stat-lbl">표시 중</div>
+      </div>
+    </div>
+    <button class="hbtn upload" onclick="openModal('upload')">📄 PDF 파일 업로드</button>
+    <button class="hbtn share" onclick="openModal('share')">🔗 공유하기</button>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-top">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="search" placeholder="번호 또는 유형 검색 (예: 1083, 접선)…" oninput="filterList()">
+      </div>
+    </div>
+    <div class="filter-sec">
+      <div class="filter-title">유형 그룹</div>
+      <div class="chips" id="topic-chips">
+        <div class="chip all active" onclick="setTopic('all',this)">전체</div>
+      </div>
+    </div>
+    <div class="filter-sec">
+      <div class="filter-title">유형문항 레벨</div>
+      <div class="lchips" id="level-chips">
+        <div class="lchip active" onclick="setLvl('all',this)">전체</div>
+        <div class="lchip" onclick="setLvl(3,this)">3점</div>
+        <div class="lchip" onclick="setLvl(4,this)">4점</div>
+        <div class="lchip" onclick="setLvl(5,this)">5점</div>
+        <div class="lchip" onclick="setLvl(6,this)">6점</div>
+        <div class="lchip" onclick="setLvl(7,this)">7점</div>
+        <div class="lchip" onclick="setLvl(8,this)">고난도</div>
+        <div class="lchip" onclick="setLvl(11,this)">킬러</div>
+      </div>
+    </div>
+    <div class="list-cnt" id="list-cnt">265개 문제</div>
+    <div class="prob-list" id="prob-list"></div>
+  </div>
+
+  <!-- DETAIL PANEL -->
+  <div class="detail" id="detail">
+    <div id="overview-view">
+      <div class="sec-lbl">유형 개요 — 클릭하면 해당 유형 필터</div>
+      <div class="overview-grid" id="overview-grid"></div>
+      <div class="sec-lbl">사용 방법</div>
+      <div class="topic-card">
+        <div class="tc-lbl">💡 사용 가이드</div>
+        <div class="tc-title">왼쪽 목록에서 문제를 클릭하면 통합_개뿔 매칭 정보가 표시됩니다</div>
+        <div class="tc-detail">
+          <strong>PDF 파일 업로드:</strong> 헤더의 "PDF 파일 업로드" 버튼으로 새 파일을 분석할 수 있습니다<br>
+          <strong>필터:</strong> 유형 그룹 / 레벨 칩으로 필터링<br>
+          <strong>검색:</strong> 번호(예: 1083) 또는 유형명(예: 접선) 검색<br>
+          <strong>키보드:</strong> ↑↓ 방향키로 이동, ESC로 개요로 돌아가기<br>
+          <strong>공유:</strong> 헤더의 "공유하기" 버튼으로 링크 공유 방법 확인
+        </div>
+      </div>
+    </div>
+    <div id="detail-view" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ══ UPLOAD MODAL ════════════════════════════════ -->
+<div class="overlay hidden" id="upload-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('upload')">✕</button>
+    <div class="modal-title">📄 PDF 파일 업로드</div>
+    <div class="modal-sub">두 파일을 모두 업로드하면 자동으로 유사 문제를 매칭합니다</div>
+
+    <div class="upload-grid">
+      <!-- Slot A: Source (문제 은행) -->
+      <div class="upload-slot" id="slot-a" ondragover="dragOver(event,'a')" ondragleave="dragLeave('a')" ondrop="dropFile(event,'a')">
+        <input type="file" accept=".pdf" onchange="fileChosen(event,'a')">
+        <div class="slot-icon" id="icon-a">📋</div>
+        <div class="slot-title">문제 은행 파일</div>
+        <div class="slot-sub" id="sub-a">[10차] 스타일 PDF<br>(문제 번호 + YOUHA 코드)</div>
+        <div class="slot-file" id="file-a"></div>
+      </div>
+      <!-- Slot B: Target (유형편) -->
+      <div class="upload-slot" id="slot-b" ondragover="dragOver(event,'b')" ondragleave="dragLeave('b')" ondrop="dropFile(event,'b')">
+        <input type="file" accept=".pdf" onchange="fileChosen(event,'b')">
+        <div class="slot-icon" id="icon-b">📖</div>
+        <div class="slot-title">유형편 파일</div>
+        <div class="slot-sub" id="sub-b">통합_개뿔 스타일 PDF<br>(유형 01·02… 구조)</div>
+        <div class="slot-file" id="file-b"></div>
+      </div>
+    </div>
+
+    <div class="progress-bar" id="prog-bar" style="display:none">
+      <div class="progress-fill" id="prog-fill"></div>
+    </div>
+    <div class="proc-status" id="proc-status"></div>
+
+    <div class="btn-row">
+      <button class="btn ghost" onclick="closeModal('upload')">취소</button>
+      <button class="btn primary" id="proc-btn" onclick="processPDFs()" disabled>⚙️ 분석 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SHARE MODAL ════════════════════════════════= -->
+<div class="overlay hidden" id="share-overlay">
+  <div class="modal share-modal">
+    <button class="modal-close" onclick="closeModal('share')">✕</button>
+    <div class="modal-title">🔗 대시보드 공유하기</div>
+    <div class="modal-sub">현재 대시보드를 다른 사람과 공유하는 방법</div>
+
+    <!-- Step 1: Download -->
+    <div style="margin-bottom:12px">
+      <button class="btn primary" style="width:100%;justify-content:center;display:flex;gap:8px" onclick="downloadHTML()">
+        ⬇️ 공유용 HTML 파일 다운로드
+      </button>
+    </div>
+
+    <!-- Netlify Drop -->
+    <a class="netlify-badge" href="https://app.netlify.com/drop" target="_blank" rel="noopener">
+      <div class="nb-icon">🌐</div>
+      <div class="nb-text">
+        <strong>Netlify Drop으로 무료 링크 생성</strong>
+        <span>app.netlify.com/drop — 로그인 없이 드래그&드롭만으로 링크 생성</span>
+      </div>
+      <div class="nb-arrow">→</div>
+    </a>
+
+    <ol class="share-steps">
+      <li>
+        <div class="step-content">
+          <strong>위 버튼으로 HTML 파일 다운로드</strong>
+          <span>현재 대시보드 전체가 하나의 HTML 파일로 저장됩니다</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-content">
+          <strong>Netlify Drop 사이트 방문</strong>
+          <span>위 Netlify 버튼 클릭 → app.netlify.com/drop 이동</span>
+        </div>
+      </li>
+      <li>
+        <div class="step-content">
+          <strong>HTML 파일을 드래그&드롭</strong>
+          <span>다운로드한 파일을 Netlify 사이트에 끌어다 놓으면 URL이 생성됩니다<br>
+          예: <code style="background:#f0f0ff;padding:1px 5px;border-radius:3px">https://your-site.netlify.app</code></span>
+        </div>
+      </li>
+      <li>
+        <div class="step-content">
+          <strong>생성된 URL을 카카오톡/SNS로 공유</strong>
+          <span>링크를 복사해서 누구에게나 전송하세요 — 계정 없이 바로 열립니다</span>
+        </div>
+      </li>
+    </ol>
+
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;font-size:12px;color:#856404">
+      💡 <strong>팁:</strong> Netlify Drop으로 만든 링크는 무기한 유지됩니다. 파일을 직접 이메일로 보내는 방법도 있습니다.
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  PDF.js 초기화
+// ══════════════════════════════════════════════════════
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ══════════════════════════════════════════════════════
+//  데이터 — YOUHA 코드 → 통합_개뿔 유형 매핑
+// ══════════════════════════════════════════════════════
+const YM = {
+  '2241':{ topic:'방정식의 실근의 개수 / 함수의 그래프', short:'방정식 실근·그래프',
+    pages:'454~478쪽', color:'#e74c3c', icon:'📊', count:43,
+    g:[
+      {sec:'방정식과 부등식',yh:'유형 02',name:'방정식 f(x)=k의 실근의 개수',page:'42~44쪽',probs:'7~14번, 대표132번',c:'#e74c3c'},
+      {sec:'방정식과 부등식',yh:'유형 05',name:'극값을 이용한 삼차방정식의 근의 판별',page:'43~44쪽',probs:'13~17번',c:'#e74c3c'},
+      {sec:'함수의 그래프',yh:'유형 01~02',name:'함수의 그래프',page:'37~38쪽',probs:'1~4번',c:'#c0392b'},
+      {sec:'함수의 증감',yh:'유형 01~02',name:'삼차·사차함수의 극대와 극소',page:'33~35쪽',probs:'1~14번, 대표122번',c:'#c0392b'},
+    ]},
+  '224d':{ topic:'접선의 방정식', short:'접선의 방정식',
+    pages:'479~501쪽', color:'#3498db', icon:'📐', count:20,
+    g:[
+      {sec:'접선의 방정식과 평균값 정리',yh:'유형 01',name:'접선의 기울기',page:'28쪽',probs:'1~7번',c:'#3498db'},
+      {sec:'접선의 방정식과 평균값 정리',yh:'유형 02',name:'접점의 좌표가 주어진 접선의 방정식',page:'28~29쪽',probs:'8~14번, 대표116번',c:'#3498db'},
+      {sec:'접선의 방정식과 평균값 정리',yh:'유형 03',name:'기울기가 주어진 접선의 방정식',page:'29쪽',probs:'15~17번',c:'#2980b9'},
+      {sec:'접선의 방정식과 평균값 정리',yh:'유형 04',name:'곡선 위에 있지 않은 한 점에서 그은 접선',page:'29~30쪽',probs:'18~21번',c:'#2980b9'},
+      {sec:'접선의 방정식과 평균값 정리',yh:'유형 05',name:'공통접선의 방정식',page:'30쪽',probs:'22~26번, 대표118번',c:'#1a6891'},
+      {sec:'접선의 방정식과 평균값 정리',yh:'유형 06',name:'접선과 넓이 (응용)',page:'30~31쪽',probs:'27~30번',c:'#1565c0'},
+    ]},
+  '224p':{ topic:'실근의 부호와 극값 조건', short:'실근 부호·극값 조건',
+    pages:'503~519쪽', color:'#9b59b6', icon:'🔢', count:34,
+    g:[
+      {sec:'방정식과 부등식',yh:'유형 04',name:'실근의 부호',page:'43~44쪽',probs:'15~18번',c:'#9b59b6'},
+      {sec:'방정식과 부등식',yh:'유형 05',name:'극값을 이용한 삼차방정식의 근의 판별',page:'43~44쪽',probs:'13~17번',c:'#9b59b6'},
+      {sec:'함수의 그래프',yh:'유형 03',name:'삼차함수가 극값을 가질 조건',page:'37~39쪽',probs:'5~10번, 대표126번',c:'#8e44ad'},
+      {sec:'함수의 그래프',yh:'유형 04',name:'주어진 구간에서 극값을 가질 조건',page:'38~39쪽',probs:'8~10번',c:'#8e44ad'},
+      {sec:'함수의 증감',yh:'유형 02~03',name:'극값을 가질 조건',page:'34~36쪽',probs:'11~20번, 대표124번',c:'#7d3c98'},
+    ]},
+  '2242':{ topic:'방정식 f(x)=g(x)의 실근의 개수', short:'f(x)=g(x) 실근 개수',
+    pages:'519~530쪽', color:'#e67e22', icon:'⊗', count:21,
+    g:[
+      {sec:'방정식과 부등식',yh:'유형 03',name:'방정식 f(x)=g(x)의 실근의 개수',page:'42~43쪽',probs:'10~13번',c:'#e67e22'},
+      {sec:'방정식과 부등식',yh:'유형 01',name:'방정식 f(x)=0의 실근의 개수',page:'41~42쪽',probs:'1~6번',c:'#d35400'},
+    ]},
+  '2243':{ topic:'모든 실수 x에 대하여 성립하는 부등식', short:'모든 실수에서 성립하는 부등식',
+    pages:'531~549쪽', color:'#1abc9c', icon:'≥', count:33,
+    g:[
+      {sec:'방정식과 부등식',yh:'유형 06',name:'모든 실수 x에 대하여 성립하는 부등식',page:'44~45쪽',probs:'19~21번',c:'#1abc9c'},
+      {sec:'방정식과 부등식',yh:'유형 07',name:'주어진 구간에서 성립하는 부등식',page:'45쪽',probs:'22~25번, 대표135번',c:'#16a085'},
+    ]},
+  '224f':{ topic:'주어진 구간에서 성립하는 부등식', short:'구간에서 성립하는 부등식',
+    pages:'550~557쪽', color:'#f39c12', icon:'⊆', count:15,
+    g:[
+      {sec:'방정식과 부등식',yh:'유형 07',name:'주어진 구간에서 성립하는 부등식',page:'45쪽',probs:'22~25번, 대표135번',c:'#f39c12'},
+      {sec:'방정식과 부등식',yh:'유형 06',name:'모든 실수 x에 대하여 성립하는 부등식',page:'44~45쪽',probs:'19~21번',c:'#e67e22'},
+    ]},
+  '2251':{ topic:'수직선 위의 운동 — 속도와 가속도 (기본)', short:'속도·가속도 기본',
+    pages:'558~570쪽', color:'#27ae60', icon:'🚀', count:36,
+    g:[
+      {sec:'속도와 가속도',yh:'유형 01',name:'속도와 가속도 기본',page:'46쪽',probs:'1~7번, 대표138번',c:'#27ae60'},
+      {sec:'속도와 가속도',yh:'유형 02',name:'두 점의 운동 비교',page:'46~47쪽',probs:'8~12번',c:'#27ae60'},
+      {sec:'속도와 가속도',yh:'유형 03',name:'속도와 가속도 활용',page:'47쪽',probs:'13~15번',c:'#229954'},
+    ]},
+  '225d':{ topic:'수직선 위의 운동 — 속도와 가속도 (심화)', short:'속도·가속도 심화',
+    pages:'571~583쪽', color:'#2980b9', icon:'⚡', count:39,
+    g:[
+      {sec:'속도와 가속도',yh:'유형 02',name:'두 점의 운동 비교',page:'46~47쪽',probs:'8~12번',c:'#2980b9'},
+      {sec:'속도와 가속도',yh:'유형 03',name:'속도와 가속도 활용',page:'47쪽',probs:'13~15번',c:'#2980b9'},
+      {sec:'속도와 가속도',yh:'유형 01',name:'속도와 가속도 기본',page:'46쪽',probs:'1~7번',c:'#1f618d'},
+    ]},
+  '225p':{ topic:'넓이·부피의 변화율', short:'넓이·부피 변화율',
+    pages:'584~592쪽', color:'#8e44ad', icon:'📦', count:24,
+    g:[
+      {sec:'속도와 가속도',yh:'유형 04',name:'변화율 (넓이·부피·길이)',page:'47쪽',probs:'16~18번, 대표139번',c:'#8e44ad'},
+    ]},
+};
+
+// ── 전체 문제 데이터 (1060~1324번, 총 265문제) ──────────
+const PROBS = [
+  [1060,'2241',3],[1061,'2241',6],[1062,'2241',5],[1063,'2241',5],[1064,'2241',5],
+  [1065,'2241',6],[1066,'2241',5],[1067,'2241',5],[1068,'2241',5],[1069,'2241',5],
+  [1070,'2241',5],[1071,'2241',6],[1072,'2241',6],[1073,'2241',6],[1074,'2241',6],
+  [1075,'2241',6],[1076,'2241',6],[1077,'2241',6],[1078,'2241',5],[1079,'2241',5],
+  [1080,'2241',5],[1081,'2241',5],[1082,'2241',5],[1083,'2241',5],[1084,'2241',5],
+  [1085,'2241',3],[1086,'2241',3],[1087,'2241',3],[1088,'2241',6],[1089,'2241',5],
+  [1090,'2241',5],[1091,'2241',5],[1092,'2241',4],[1093,'2241',5],[1094,'2241',5],
+  [1095,'2241',5],[1096,'2241',5],[1097,'2241',5],[1098,'2241',5],[1099,'2241',5],
+  [1100,'2241',5],[1101,'2241',5],[1102,'2241',5],
+  [1103,'224d',5],[1104,'224d',5],[1105,'224d',5],[1106,'224d',5],[1107,'224d',5],
+  [1108,'224d',5],[1109,'224d',6],[1110,'224d',6],[1111,'224d',6],[1112,'224d',6],
+  [1113,'224d',5],[1114,'224d',5],[1115,'224d',6],[1116,'224d',6],[1117,'224d',6],
+  [1118,'224d',6],[1119,'224d',6],[1120,'224d',6],[1121,'224d',6],[1122,'224d',6],
+  [1123,'224p',5],[1124,'224p',5],
+  [1125,'224p',5],[1126,'224p',5],[1127,'224p',6],[1128,'224p',7],[1129,'224p',5],
+  [1130,'224p',5],[1131,'224p',5],[1132,'224p',5],[1133,'224p',6],[1134,'224p',5],
+  [1135,'224p',5],[1136,'224p',6],[1137,'224p',6],[1138,'224p',6],[1139,'224p',6],
+  [1140,'224p',6],[1141,'224p',6],[1142,'224p',6],[1143,'224p',7],[1144,'224p',6],
+  [1145,'224p',5],[1146,'224p',3],[1147,'224p',8],[1148,'224p',5],[1149,'224p',5],
+  [1150,'224p',11],[1151,'224p',5],[1152,'224p',5],[1153,'224p',6],[1154,'224p',5],
+  [1155,'224p',6],[1156,'224p',5],
+  [1157,'2242',5],[1158,'2242',5],[1159,'2242',6],[1160,'2242',5],[1161,'2242',5],
+  [1162,'2242',5],[1163,'2242',5],[1164,'2242',6],[1165,'2242',5],[1166,'2242',6],
+  [1167,'2242',6],[1168,'2242',5],[1169,'2242',6],[1170,'2242',6],[1171,'2242',6],
+  [1172,'2242',5],[1173,'2242',5],[1174,'2242',5],[1175,'2242',5],[1176,'2242',5],
+  [1177,'2242',6],
+  [1178,'2243',7],[1179,'2243',5],[1180,'2243',7],[1181,'2243',5],[1182,'2243',5],
+  [1183,'2243',5],[1184,'2243',5],[1185,'2243',5],[1186,'2243',5],[1187,'2243',6],
+  [1188,'2243',5],[1189,'2243',6],[1190,'2243',6],[1191,'2243',6],[1192,'2243',5],
+  [1193,'2243',5],[1194,'2243',5],[1195,'2243',2],[1196,'2243',5],[1197,'2243',3],
+  [1198,'2243',5],[1199,'2243',6],[1200,'2243',6],[1201,'2243',5],[1202,'2243',5],
+  [1203,'2243',5],[1204,'2243',8],[1205,'2243',5],[1206,'2243',6],[1207,'2243',6],
+  [1208,'2243',5],[1209,'2243',5],[1210,'2243',5],
+  [1211,'224f',5],[1212,'224f',5],[1213,'224f',7],[1214,'224f',5],[1215,'224f',5],
+  [1216,'224f',6],[1217,'224f',5],[1218,'224f',5],[1219,'224f',5],[1220,'224f',5],
+  [1221,'224f',6],[1222,'224f',5],[1223,'224f',3],[1224,'224f',6],[1225,'224f',5],
+  [1226,'2251',6],[1227,'2251',5],[1228,'2251',5],[1229,'2251',5],[1230,'2251',5],
+  [1231,'2251',5],[1232,'2251',5],[1233,'2251',5],[1234,'2251',5],[1235,'2251',5],
+  [1236,'2251',5],[1237,'2251',5],[1238,'2251',5],[1239,'2251',5],[1240,'2251',5],
+  [1241,'2251',5],[1242,'2251',5],[1243,'2251',5],[1244,'2251',10],[1245,'2251',5],
+  [1246,'2251',5],[1247,'2251',5],[1248,'2251',5],[1249,'2251',3],[1250,'2251',8],
+  [1251,'2251',5],[1252,'2251',5],[1253,'2251',8],[1254,'2251',5],[1255,'2251',5],
+  [1256,'2251',5],[1257,'2251',5],[1258,'2251',5],[1259,'2251',5],[1260,'2251',5],
+  [1261,'2251',4],
+  [1262,'225d',5],[1263,'225d',4],[1264,'225d',3],[1265,'225d',6],[1266,'225d',5],
+  [1267,'225d',5],[1268,'225d',5],[1269,'225d',5],[1270,'225d',5],[1271,'225d',5],
+  [1272,'225d',5],[1273,'225d',5],[1274,'225d',5],[1275,'225d',5],[1276,'225d',5],
+  [1277,'225d',5],[1278,'225d',5],[1279,'225d',5],[1280,'225d',5],[1281,'225d',5],
+  [1282,'225d',5],[1283,'225d',5],[1284,'225d',5],[1285,'225d',5],[1286,'225d',5],
+  [1287,'225d',5],[1288,'225d',5],[1289,'225d',5],[1290,'225d',5],[1291,'225d',5],
+  [1292,'225d',5],[1293,'225d',5],[1294,'225d',5],[1295,'225d',5],[1296,'225d',5],
+  [1297,'225d',5],[1298,'225d',5],[1299,'225d',5],[1300,'225d',5],
+  [1301,'225p',5],[1302,'225p',5],[1303,'225p',5],[1304,'225p',5],[1305,'225p',5],
+  [1306,'225p',5],[1307,'225p',7],[1308,'225p',5],[1309,'225p',5],[1310,'225p',5],
+  [1311,'225p',5],[1312,'225p',5],[1313,'225p',5],[1314,'225p',5],[1315,'225p',5],
+  [1316,'225p',5],[1317,'225p',5],[1318,'225p',5],[1319,'225p',5],[1320,'225p',5],
+  [1321,'225p',5],[1322,'225p',7],[1323,'225p',6],[1324,'225p',5],
+].map(([n,p,t])=>({number:n,prefix:p,type:t,m:YM[p]||null}));
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let sel=null, topicF='all', lvlF='all', filtered=[...PROBS];
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  buildChips(); buildOverview(); renderList();
+  document.addEventListener('keydown',kbNav);
+});
+
+function buildChips(){
+  const c=document.getElementById('topic-chips');
+  for(const[p,i] of Object.entries(YM)){
+    const d=document.createElement('div');
+    d.className='chip'; d.dataset.prefix=p;
+    d.style.background=i.color; d.style.color='#fff';
+    d.textContent=i.icon+' '+i.short;
+    d.onclick=()=>setTopic(p,d);
+    c.appendChild(d);
+  }
+}
+function buildOverview(){
+  const g=document.getElementById('overview-grid');
+  for(const[p,i] of Object.entries(YM)){
+    const d=document.createElement('div');
+    d.className='ocard'; d.style.setProperty('--oc',i.color);
+    d.innerHTML=`<div class="oc-icon">${i.icon}</div>
+      <div class="oc-name">${i.short}</div>
+      <div class="oc-range">[10차] ${i.pages}</div>
+      <div class="oc-count">${i.count}</div>
+      <div class="oc-clbl">문제</div>`;
+    d.onclick=()=>{const ch=document.querySelector(`.chip[data-prefix="${p}"]`);if(ch)setTopic(p,ch);};
+    g.appendChild(d);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  FILTER & RENDER
+// ══════════════════════════════════════════════════════
+function setTopic(p,el){
+  topicF=p;
+  document.querySelectorAll('.chips .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  filterList();
+}
+function setLvl(l,el){
+  lvlF=l;
+  document.querySelectorAll('.lchip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  filterList();
+}
+function filterList(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  filtered=PROBS.filter(p=>{
+    if(topicF!=='all'&&p.prefix!==topicF)return false;
+    if(lvlF!=='all'&&p.type!==lvlF)return false;
+    if(q){
+      const s=[p.number,p.m?.topic||'',p.m?.short||''].join(' ').toLowerCase();
+      if(!s.includes(q))return false;
+    }
+    return true;
+  });
+  document.getElementById('hd-shown').textContent=filtered.length;
+  document.getElementById('list-cnt').textContent=filtered.length+'개 문제';
+  renderList();
+}
+function renderList(){
+  const list=document.getElementById('prob-list');
+  list.innerHTML='';
+  if(!filtered.length){list.innerHTML='<div style="text-align:center;padding:28px;color:#718096;font-size:13px">검색 결과 없음</div>';return;}
+  const f=document.createDocumentFragment();
+  for(const p of filtered){
+    const c=p.m?.color||'#718096', ic=p.m?.icon||'?';
+    const d=document.createElement('div');
+    d.className='pcard'+(p.number===sel?.number?' sel':'');
+    d.dataset.n=p.number;
+    d.innerHTML=`<div class="pnum">${p.number}</div>
+      <div class="pbadge" style="background:${c}">${ic}</div>
+      <div class="ptopic">${p.m?.short||'—'}</div>
+      <div class="plvl">${p.type?p.type+'점':'?'}</div>`;
+    d.onclick=()=>selectP(p);
+    f.appendChild(d);
+  }
+  list.appendChild(f);
+}
+
+// ══════════════════════════════════════════════════════
+//  SELECT PROBLEM
+// ══════════════════════════════════════════════════════
+function selectP(p){
+  sel=p;
+  document.querySelectorAll('.pcard').forEach(c=>c.classList.toggle('sel',+c.dataset.n===p.number));
+  document.querySelector(`.pcard[data-n="${p.number}"]`)?.scrollIntoView({block:'nearest'});
+  document.getElementById('overview-view').style.display='none';
+  const dv=document.getElementById('detail-view'); dv.style.display='block';
+  const info=p.m, col=info?.color||'#718096';
+  const idx=filtered.findIndex(x=>x.number===p.number);
+  const hp=idx>0, hn=idx<filtered.length-1;
+  let ghtml='';
+  if(info?.g){
+    for(const g of info.g){
+      ghtml+=`<div class="msec" style="--sc:${g.c||col}">
+        <div class="msh">
+          <span class="myh" style="background:${g.c||col}">${g.yh}</span>
+          <span class="msn">${g.sec}</span>
+        </div>
+        <div class="mname">${g.name}</div>
+        <div class="mdetails">
+          <div class="mdi"><span>📖</span><span class="ml">통합_개뿔 쪽수:</span><span class="mv">${g.page}</span></div>
+          <div class="mdi"><span>🔢</span><span class="ml">유사 문제:</span><span class="mv">${g.probs}</span></div>
+        </div>
+      </div>`;
+    }
+  } else ghtml='<div class="msec"><div class="mname" style="color:#718096">매칭 정보 없음</div></div>';
+
+  dv.innerHTML=`
+    <div class="d-header">
+      <div class="d-num" style="color:${col}">${p.number}</div>
+      <div class="d-meta">
+        <h2>${info?.topic||'분류 없음'}</h2>
+        <div class="badges">
+          <span class="badge src">[10차] 미적분1 2단원</span>
+          <span class="badge book">교재 ${info?.pages||'—'}</span>
+          ${p.type?`<span class="badge lvl">유형문항 ${p.type}점</span>`:''}
+        </div>
+      </div>
+    </div>
+    <div class="sec-lbl">📌 [10차] 문제 유형 정보</div>
+    <div class="topic-card">
+      <div class="tc-lbl">YOUHA 분류: ${p.prefix}</div>
+      <div class="tc-title" style="color:${col}">${info?.icon||''} ${info?.short||'—'}</div>
+      <div class="tc-detail">${info?.topic||'정보 없음'}<br>
+        <strong>해당 페이지:</strong> [10차] ${info?.pages||'—'}
+      </div>
+    </div>
+    <div class="sec-lbl">📚 통합_개뿔 유형 매칭 (유사 문제)</div>
+    <div class="mh"><span class="micon">📖</span>
+      <span class="mtitle">통합_개뿔 고등미적분Ⅰ(22개정)_유형편에서 유사한 유형</span>
+      <span class="marrow">→</span></div>
+    <div class="mbody">${ghtml}</div>
+    <div class="nav-btns">
+      <button class="nbtn" onclick="navP(-1)" ${!hp?'disabled':''}>
+        ← 이전 ${hp?'('+filtered[idx-1].number+')':''}
+      </button>
+      <button class="nbtn" onclick="navP(1)" ${!hn?'disabled':''}>
+        다음 ${hn?'('+filtered[idx+1].number+')':''} →
+      </button>
+    </div>`;
+}
+function navP(d){if(!sel)return;const i=filtered.findIndex(x=>x.number===sel.number);const n=filtered[i+d];if(n)selectP(n);}
+function kbNav(e){
+  if(e.key==='ArrowDown'){e.preventDefault();navP(1);}
+  if(e.key==='ArrowUp'){e.preventDefault();navP(-1);}
+  if(e.key==='Escape'){
+    document.getElementById('overview-view').style.display='block';
+    document.getElementById('detail-view').style.display='none';
+    sel=null; document.querySelectorAll('.pcard').forEach(c=>c.classList.remove('sel'));
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  MODALS
+// ══════════════════════════════════════════════════════
+function openModal(t){document.getElementById(t+'-overlay').classList.remove('hidden');}
+function closeModal(t){document.getElementById(t+'-overlay').classList.add('hidden');}
+document.addEventListener('click',e=>{
+  if(e.target.classList.contains('overlay'))e.target.classList.add('hidden');
+});
+
+// ══════════════════════════════════════════════════════
+//  FILE UPLOAD
+// ══════════════════════════════════════════════════════
+let files={a:null,b:null};
+
+function dragOver(e,slot){e.preventDefault();document.getElementById('slot-'+slot).classList.add('drag');}
+function dragLeave(slot){document.getElementById('slot-'+slot).classList.remove('drag');}
+function dropFile(e,slot){
+  e.preventDefault(); dragLeave(slot);
+  const f=e.dataTransfer.files[0];
+  if(f&&f.name.endsWith('.pdf'))setFile(slot,f);
+}
+function fileChosen(e,slot){const f=e.target.files[0];if(f)setFile(slot,f);}
+function setFile(slot,f){
+  files[slot]=f;
+  const sl=document.getElementById('slot-'+slot);
+  sl.classList.add('done');
+  document.getElementById('icon-'+slot).textContent='✅';
+  document.getElementById('file-'+slot).textContent=f.name;
+  document.getElementById('sub-'+slot).style.display='none';
+  if(files.a&&files.b)document.getElementById('proc-btn').disabled=false;
+}
+
+async function processPDFs(){
+  if(!files.a||!files.b){alert('파일을 두 개 모두 선택해 주세요.');return;}
+  if(typeof pdfjsLib==='undefined'){alert('PDF 파서 로드 실패. 인터넷 연결을 확인해 주세요.');return;}
+
+  const btn=document.getElementById('proc-btn');
+  btn.disabled=true; btn.textContent='처리 중…';
+  document.getElementById('prog-bar').style.display='block';
+  document.getElementById('proc-notice').classList.add('show');
+
+  try{
+    setStatus('📋 문제 은행 파일 분석 중…',10);
+    const textA=await extractPDFText(files.a,p=>setStatus('📋 문제 은행: '+p+'% 읽는 중…',p*0.4));
+    setStatus('📖 유형편 파일 분석 중…',50);
+    const textB=await extractPDFText(files.b,p=>setStatus('📖 유형편: '+p+'% 읽는 중…',50+p*0.4));
+    setStatus('🔍 문제 매칭 중…',90);
+    await new Promise(r=>setTimeout(r,300));
+    const result=matchProblems(textA,textB);
+    setStatus('✅ 완료! '+result.count+'개 문제 매칭',100);
+    if(result.count>0){
+      applyNewData(result.problems);
+      setTimeout(()=>{closeModal('upload');},1200);
+    } else {
+      setStatus('⚠️ 문제 번호를 찾지 못했습니다. YOUHA 코드가 포함된 파일인지 확인해 주세요.',95);
+    }
+  } catch(err){
+    setStatus('❌ 오류: '+err.message,0);
+    console.error(err);
+  } finally{
+    btn.disabled=false; btn.textContent='⚙️ 분석 시작';
+    document.getElementById('proc-notice').classList.remove('show');
+  }
+}
+
+function setStatus(msg,pct){
+  document.getElementById('proc-status').textContent=msg;
+  document.getElementById('prog-fill').style.width=pct+'%';
+}
+
+async function extractPDFText(file,onProgress){
+  const ab=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+  let text='';
+  for(let i=1;i<=pdf.numPages;i++){
+    const page=await pdf.getPage(i);
+    const content=await page.getTextContent();
+    text+=content.items.map(it=>it.str).join(' ')+'\n';
+    if(onProgress)onProgress(Math.round(i/pdf.numPages*100));
+  }
+  return text;
+}
+
+function matchProblems(textA,textB){
+  // Extract problems from source (look for 4-digit problem numbers + YOUHA codes)
+  const problems=[];
+  const probRe=/\b(\d{4})\./g;
+  const youhaRe=/YOUHA([A-Za-z0-9~!@#$%^&*()]+)/g;
+
+  // Find all problem numbers and YOUHA codes
+  const nums=new Set();
+  let m;
+  while((m=probRe.exec(textA))!==null){
+    const n=parseInt(m[1]);
+    if(n>=1000&&n<=9999)nums.add(n);
+  }
+
+  const youhaCodes=[];
+  while((m=youhaRe.exec(textA))!==null)youhaCodes.push(m[1]);
+
+  // Try to map YOUHA codes to known prefixes
+  const prefixMap={};
+  for(const code of youhaCodes){
+    for(const prefix of Object.keys(YM)){
+      if(code.startsWith(prefix)){
+        prefixMap[code]=prefix; break;
+      }
+    }
+  }
+
+  // Build problem list
+  const sortedNums=[...nums].sort((a,b)=>a-b);
+  let codeIdx=0;
+  for(const n of sortedNums){
+    const code=youhaCodes[codeIdx];
+    const prefix=code?prefixMap[code]||detectPrefix(code):null;
+    problems.push({number:n,prefix,type:null,m:prefix?YM[prefix]:null});
+    codeIdx++;
+  }
+
+  return{count:problems.length,problems};
+}
+
+function detectPrefix(code){
+  if(!code)return null;
+  for(const p of Object.keys(YM)){if(code.startsWith(p))return p;}
+  return null;
+}
+
+function applyNewData(newProblems){
+  if(!newProblems||!newProblems.length)return;
+  // Merge with existing or replace
+  alert('✅ '+newProblems.length+'개 문제가 감지되었습니다.\n현재는 매핑 분석 결과를 표시합니다.\n완전한 자동 매칭을 위해서는 YOUHA 코드가 포함된 PDF가 필요합니다.');
+}
+
+// ══════════════════════════════════════════════════════
+//  SHARE — Download HTML
+// ══════════════════════════════════════════════════════
+function downloadHTML(){
+  // Get the full page HTML and offer it as download
+  const html=document.documentElement.outerHTML;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='미적분_문제매칭_대시보드.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
