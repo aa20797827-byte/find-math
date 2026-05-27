@@ -214,6 +214,92 @@ header{background:linear-gradient(135deg,#1e1b4b,#4338ca);color:#fff;
   color:#fff;padding:8px 16px;font-size:12px;font-weight:600;
   text-align:center;flex-shrink:0;display:none}
 .proc-notice.show{display:block}
+
+/* ══ MOBILE (≤767px) ══════════════════════════════ */
+@media (max-width:767px){
+  body{height:100dvh}
+
+  /* Header: compact */
+  header{padding:8px 12px;gap:8px}
+  .logo{font-size:14px;letter-spacing:-.3px}
+  .logo-sub{display:none}
+  .stat-num{font-size:15px}
+  .stat-lbl{font-size:9px}
+  .div{height:20px}
+  .hbtn.upload{display:none}
+  .hbtn.share{padding:6px 10px;font-size:12px;gap:4px}
+
+  /* Main: 슬라이드 패널 구조 */
+  .main{flex-direction:column;position:relative;overflow:hidden}
+  .sidebar{
+    width:100%;height:100%;
+    position:absolute;inset:0;z-index:10;
+    transition:transform .28s cubic-bezier(.4,0,.2,1)
+  }
+  .detail{
+    position:absolute;inset:0;z-index:20;
+    padding:14px 14px 20px;
+    transform:translateX(100%);
+    transition:transform .28s cubic-bezier(.4,0,.2,1)
+  }
+  /* 상세 패널이 열릴 때 */
+  .main.mob-detail .sidebar{transform:translateX(-100%)}
+  .main.mob-detail .detail{transform:translateX(0)}
+
+  /* 목록: 터치 타겟 크게 */
+  .pcard{padding:12px 10px;margin-bottom:4px}
+  .pnum{font-size:15px;min-width:44px}
+  .pbadge{padding:3px 7px}
+  .ptopic{font-size:12px}
+
+  /* 필터 칩: 가로 스크롤 */
+  .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .lchips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .lchips::-webkit-scrollbar{display:none}
+  .chip{flex-shrink:0;padding:5px 12px;font-size:11px}
+  .lchip{flex-shrink:0;padding:5px 10px;font-size:11px}
+
+  /* 개요 그리드 */
+  .overview-grid{grid-template-columns:1fr 1fr;gap:6px}
+  .ocard{padding:10px 11px}
+  .oc-name{font-size:11px}
+  .oc-count{font-size:18px}
+
+  /* 상세 화면 */
+  .d-num{font-size:34px}
+  .d-header{gap:10px;margin-bottom:12px}
+  .d-meta h2{font-size:15px}
+  .badges{gap:4px}
+  .badge{font-size:10px;padding:2px 6px}
+  .msec{padding:10px 13px}
+  .mname{font-size:13px}
+  .mdetails{flex-direction:column;gap:5px}
+  .mdi{font-size:12px}
+  .nbtn{padding:13px 14px;font-size:13px}
+  .sec-lbl{margin:12px 0 6px}
+
+  /* 모달 */
+  .modal{padding:20px 14px;margin:8px;border-radius:12px}
+  .upload-grid{grid-template-columns:1fr}
+  .share-modal{max-width:100%}
+  .modal-title{font-size:16px}
+  .btn-row{flex-direction:column-reverse}
+  .btn{width:100%;text-align:center}
+
+  /* 뒤로가기 버튼 (모바일 전용) */
+  .mob-back{
+    display:flex;align-items:center;gap:6px;
+    background:none;border:none;cursor:pointer;
+    color:var(--accent);font-size:14px;font-weight:700;
+    padding:0 0 14px;-webkit-tap-highlight-color:transparent;
+    letter-spacing:-.2px
+  }
+  .mob-back:active{opacity:.6}
+}
+@media (min-width:768px){.mob-back{display:none}}
 </style>
 </head>
 <body>
@@ -633,6 +719,8 @@ function selectP(p){
   document.querySelector(`.pcard[data-n="${p.number}"]`)?.scrollIntoView({block:'nearest'});
   document.getElementById('overview-view').style.display='none';
   const dv=document.getElementById('detail-view'); dv.style.display='block';
+  // 모바일: 슬라이드 패널 전환
+  if(window.innerWidth<768) document.querySelector('.main').classList.add('mob-detail');
   const info=p.m, col=info?.color||'#718096';
   const idx=filtered.findIndex(x=>x.number===p.number);
   const hp=idx>0, hn=idx<filtered.length-1;
@@ -654,6 +742,7 @@ function selectP(p){
   } else ghtml='<div class="msec"><div class="mname" style="color:#718096">매칭 정보 없음</div></div>';
 
   dv.innerHTML=`
+    <button class="mob-back" onclick="goBackMobile()">← 목록으로</button>
     <div class="d-header">
       <div class="d-num" style="color:${col}">${p.number}</div>
       <div class="d-meta">
@@ -688,10 +777,17 @@ function selectP(p){
     </div>`;
 }
 function navP(d){if(!sel)return;const i=filtered.findIndex(x=>x.number===sel.number);const n=filtered[i+d];if(n)selectP(n);}
+function goBackMobile(){
+  document.querySelector('.main').classList.remove('mob-detail');
+  document.getElementById('overview-view').style.display='block';
+  document.getElementById('detail-view').style.display='none';
+  sel=null; document.querySelectorAll('.pcard').forEach(c=>c.classList.remove('sel'));
+}
 function kbNav(e){
   if(e.key==='ArrowDown'){e.preventDefault();navP(1);}
   if(e.key==='ArrowUp'){e.preventDefault();navP(-1);}
   if(e.key==='Escape'){
+    document.querySelector('.main').classList.remove('mob-detail');
     document.getElementById('overview-view').style.display='block';
     document.getElementById('detail-view').style.display='none';
     sel=null; document.querySelectorAll('.pcard').forEach(c=>c.classList.remove('sel'));
